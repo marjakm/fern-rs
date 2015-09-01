@@ -81,6 +81,7 @@
 //!     }),
 //!     output: vec![fern::OutputConfig::stdout(), fern::OutputConfig::file("output.log")],
 //!     level: log::LogLevelFilter::Trace,
+//!     directives: vec![]
 //! };
 //! ```
 //!
@@ -123,6 +124,7 @@
 //! #     }),
 //! #     output: vec![],
 //! #     level: log::LogLevelFilter::Trace,
+//! #     directives: vec![]
 //! # };
 //! if let Err(e) = fern::init_global_logger(logger_config, log::LogLevelFilter::Trace) {
 //!     panic!("Failed to initialize global logger: {}", e);
@@ -167,7 +169,7 @@ extern crate log;
 
 pub use errors::{LogError, InitError};
 pub use api::Logger;
-pub use config::{DispatchConfig, OutputConfig, IntoLog, init_global_logger};
+pub use config::{DispatchConfig, OutputConfig, IntoLog, init_global_logger, LogDirective};
 pub use loggers::NullLogger;
 
 mod api;

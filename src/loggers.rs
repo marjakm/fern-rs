@@ -15,11 +15,12 @@ pub struct DispatchLogger {
     pub output: Vec<Box<api::Logger>>,
     pub level: log::LogLevelFilter,
     pub format: Box<config::Formatter>,
+    pub directives: Vec<config::LogDirective>
 }
 
 impl DispatchLogger {
     pub fn new(format: Box<config::Formatter>, config_output: Vec<config::OutputConfig>,
-            level: log::LogLevelFilter) -> io::Result<DispatchLogger> {
+            level: log::LogLevelFilter, mut directives: Vec<config::LogDirective>) -> io::Result<DispatchLogger> {
 
         let output = try!(config_output.into_iter().fold(Ok(Vec::new()),
                      |processed: io::Result<Vec<Box<api::Logger>>>, next: config::OutputConfig| {
@@ -36,20 +37,41 @@ impl DispatchLogger {
             };
         }));
 
+        // From https://github.com/rust-lang/log/blob/63fee41a26bf0a6400dd1c952137c97b9ef5c645/env/src/lib.rs#L206
+        directives.sort_by(|a, b| {
+            let alen = a.name.len();
+            let blen = b.name.len();
+            alen.cmp(&blen)
+        });
+
         return Ok(DispatchLogger {
             output: output,
             level: level,
             format: format,
+            directives: directives
         });
+    }
+
+    // From https://github.com/rust-lang/log/blob/63fee41a26bf0a6400dd1c952137c97b9ef5c645/env/src/lib.rs#L149
+    fn directive_check(&self, level: &log::LogLevel, target: &str) -> bool {
+        // Search for the longest match, the vector is assumed to be pre-sorted.
+        for directive in self.directives.iter().rev() {
+            match &directive.name {
+                name if target.starts_with(&**name) => return level >= &directive.level,
+                _ => {}
+            }
+        }
+        false
     }
 }
 
 impl api::Logger for DispatchLogger {
     fn log(&self, msg: &str, level: &log::LogLevel, location: &log::LogLocation)
             -> Result<(), LogError> {
-        if *level > self.level {
+        if *level > self.level || self.directive_check(level, location.__module_path) {
             return Ok(());
         }
+
         let new_msg = (self.format)(msg, level, location);
         for logger in &self.output {
             try!(logger.log(&new_msg, level, location));

@@ -23,6 +23,7 @@ fn basic_usage_test() {
         output: vec![fern::OutputConfig::stdout(), fern::OutputConfig::file(&log_file)],
         // Only log messages Info and above
         level: log::LogLevelFilter::Info,
+        directives: vec![]
     };
 
     if let Err(e) = fern::init_global_logger(logger_config, log::LogLevelFilter::Trace) {
@@ -72,6 +73,7 @@ fn custom_line_sep_test() {
             output: vec![fern::OutputConfig::file_with_line_sep(&log_file, "\r\n")],
             // Log all messages
             level: log::LogLevelFilter::Trace,
+            directives: vec![]
         };
         // we can't init global logger for this test as it is already initialized in the general
         // usage test.

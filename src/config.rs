@@ -9,6 +9,23 @@ use api;
 use loggers;
 use errors::InitError;
 
+/// From https://github.com/rust-lang/log/blob/63fee41a26bf0a6400dd1c952137c97b9ef5c645/env/src/lib.rs#L187
+pub struct LogDirective {
+    /// Module name
+    pub name:  String,
+    /// Log level filter for that module
+    pub level: log::LogLevelFilter,
+}
+impl LogDirective {
+    /// Easier LogDirective creation
+    pub fn new(name: String, level: log::LogLevelFilter) -> Self {
+        LogDirective {
+            name: name,
+            level: level
+        }
+    }
+}
+
 /// This is the base logger configuration in fern.
 ///
 /// All DispatchConfig will do is filter log messages based on level, pass the message through the
@@ -23,6 +40,8 @@ pub struct DispatchConfig<'a> {
     /// The level of this logger. Any messages which have a lower level than this level won't be
     /// passed on.
     pub level: log::LogLevelFilter,
+    /// Choose log level by module name
+    pub directives: Vec<LogDirective>
 }
 
 pub type Formatter = Fn(&str, &log::LogLevel, &log::LogLocation) -> String + Sync + Send;
@@ -173,14 +192,14 @@ impl <'a> IntoLog for OutputConfig<'a> {
 
 impl <'a> IntoLog for DispatchConfig<'a> {
     fn into_fern_logger(self) -> io::Result<Box<api::Logger>> {
-        let DispatchConfig {format, level, output} = self;
-        let log = try!(loggers::DispatchLogger::new(format, output, level));
+        let DispatchConfig {format, level, output, directives} = self;
+        let log = try!(loggers::DispatchLogger::new(format, output, level, directives));
         return Ok(Box::new(log));
     }
 
     fn into_log(self) -> io::Result<Box<log::Log>> {
-        let DispatchConfig {format, level, output} = self;
-        let log = try!(loggers::DispatchLogger::new(format, output, level));
+        let DispatchConfig {format, level, output, directives} = self;
+        let log = try!(loggers::DispatchLogger::new(format, output, level, directives));
         return Ok(Box::new(log));
     }
 }
