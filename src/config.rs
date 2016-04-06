@@ -10,6 +10,7 @@ use loggers;
 use errors::InitError;
 
 /// From https://github.com/rust-lang/log/blob/63fee41a26bf0a6400dd1c952137c97b9ef5c645/env/src/lib.rs#L187
+#[derive(Clone, Debug)]
 pub struct LogDirective {
     /// Module name
     pub name:  String,
